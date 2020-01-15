@@ -1,0 +1,35 @@
+/* page size */
+@page {
+  size: 8in 11.5in; /* var(--pagedjs-width) doesn't work in browser when printing */
+}
+@page :blank {
+
+}
+
+/* page breaks; aka CSS fragmentation */
+.level1 {
+  break-before: recto;
+  page: chapter;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  break-after: avoid;
+}
+.footenotes {
+  break-before: always;
+  break-after: always;
+}
+.figure {
+  break-inside: avoid;
+}
+
+/* reset page numbering for main content */
+.main .level1:first-child h1 {
+  counter-reset: page;
+}
+
+/* do not break captions */
+caption {
+  break-inside: avoid;
+  break-after: avoid;
+}
