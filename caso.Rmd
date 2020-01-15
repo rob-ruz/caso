@@ -2,7 +2,12 @@
 title: "caso_itam"
 author: "Roberto Ruz Campos"
 date: "15/1/2020"
-output: html_document
+output:
+  pagedown::html_paged:
+    css: ["def-fo", "def-pg", "def"]
+    toc: false
+    self_contained: false
+    number_sections: false
 ---
 
 ```{r setup, include=FALSE}
