@@ -19,7 +19,7 @@
 <meta name="description" content="caso_itam">
 
 <script id="pandoc-meta" type="application/json">
-{"newpage_html_class":"page-break-after","date":"15/1/2020","output":{"pagedown::html_paged":{"self_contained":false,"toc":false,"css":["def-fo","def-pg","def"],"number_sections":false}},"author":"Roberto Ruz Campos","title":"caso_itam"}
+{"newpage_html_class":"page-break-after","date":"15/1/2020","output":{"pagedown::html_paged":{"self_contained":false,"toc":false,"css":["def-fo","def-pg","def"],"number_sections":false}},"author":"Roberto Ruz Campos","title":"caso_itam","editor_options":{"chunk_output_type":"console"}}
 </script>
 
 <title>caso_itam</title>
@@ -121,26 +121,476 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 
 <div class="main">
-<div id="r-markdown" class="section level2">
-<h2>R Markdown</h2>
-<p>This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>.</p>
-<p>When you click the <strong>Knit</strong> button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">summary</span>(cars)</a></code></pre></div>
-<pre><code>##      speed           dist       
-##  Min.   : 4.0   Min.   :  2.00  
-##  1st Qu.:12.0   1st Qu.: 26.00  
-##  Median :15.0   Median : 36.00  
-##  Mean   :15.4   Mean   : 42.98  
-##  3rd Qu.:19.0   3rd Qu.: 56.00  
-##  Max.   :25.0   Max.   :120.00</code></pre>
-</div>
-<div id="including-plots" class="section level2">
-<h2>Including Plots</h2>
-<p>You can also embed plots, for example:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">plot</span>(pressure)</a></code></pre></div>
-<p><img src="index_files/figure-html/pressure-1.png" width="672" /></p>
-<p>Note that the <code>echo = FALSE</code> parameter was added to the code chunk to prevent printing of the R code that generated the plot.</p>
-</div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(tidyverse)</a></code></pre></div>
+<pre><code>## -- Attaching packages ------------------------------------ tidyverse 1.3.0 --</code></pre>
+<pre><code>## v ggplot2 3.2.1     v purrr   0.3.3
+## v tibble  2.1.3     v dplyr   0.8.3
+## v tidyr   1.0.0     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.4.0</code></pre>
+<pre><code>## -- Conflicts --------------------------------------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">library</span>(tsibble)</a></code></pre></div>
+<pre><code>## 
+## Attaching package: &#39;tsibble&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     id</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">raw_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(</a>
+<a class="sourceLine" id="cb8-2" title="2">  <span class="dt">file =</span> <span class="st">&quot;Compustat_Global_daily.csv&quot;</span>,</a>
+<a class="sourceLine" id="cb8-3" title="3">  <span class="dt">col_types =</span> <span class="kw">cols</span>(</a>
+<a class="sourceLine" id="cb8-4" title="4">    <span class="dt">sedol =</span> <span class="kw">col_character</span>(),</a>
+<a class="sourceLine" id="cb8-5" title="5">    <span class="dt">datadate =</span> <span class="kw">col_date</span>(<span class="dt">format =</span> <span class="st">&quot;%Y%m%d&quot;</span>)</a>
+<a class="sourceLine" id="cb8-6" title="6">  )</a>
+<a class="sourceLine" id="cb8-7" title="7">)</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">daily_data &lt;-<span class="st"> </span>raw_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb9-2" title="2"><span class="st">  </span><span class="kw">filter</span>(</a>
+<a class="sourceLine" id="cb9-3" title="3">    exchg <span class="op">==</span><span class="st"> </span><span class="dv">208</span>,</a>
+<a class="sourceLine" id="cb9-4" title="4">    curcdd <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;MXP&quot;</span>, <span class="st">&quot;MXN&quot;</span>)</a>
+<a class="sourceLine" id="cb9-5" title="5">    ) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb9-6" title="6"><span class="st">  </span><span class="kw">mutate</span>(</a>
+<a class="sourceLine" id="cb9-7" title="7">    <span class="dt">prccd =</span> <span class="kw">if_else</span>(prccd <span class="op">==</span><span class="st"> &quot;MXP&quot;</span>, prccd <span class="op">/</span><span class="st"> </span><span class="dv">1000</span>, prccd),</a>
+<a class="sourceLine" id="cb9-8" title="8">    <span class="dt">adj_price =</span> (prccd <span class="op">/</span><span class="st"> </span>ajexdi) <span class="op">*</span><span class="st"> </span>trfd,</a>
+<a class="sourceLine" id="cb9-9" title="9">    <span class="dt">mkt_cap =</span> prccd <span class="op">*</span><span class="st"> </span>cshoc <span class="op">/</span><span class="st"> </span><span class="fl">1e6</span>,</a>
+<a class="sourceLine" id="cb9-10" title="10">    <span class="dt">size =</span> <span class="kw">log</span>(mkt_cap),</a>
+<a class="sourceLine" id="cb9-11" title="11">    <span class="dt">month =</span> <span class="kw">yearmonth</span>(datadate)</a>
+<a class="sourceLine" id="cb9-12" title="12">  ) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb9-13" title="13"><span class="st">  </span><span class="kw">select</span>(</a>
+<a class="sourceLine" id="cb9-14" title="14">    gvkey,</a>
+<a class="sourceLine" id="cb9-15" title="15">    iid,</a>
+<a class="sourceLine" id="cb9-16" title="16">    <span class="dt">date =</span> datadate,</a>
+<a class="sourceLine" id="cb9-17" title="17">    month,</a>
+<a class="sourceLine" id="cb9-18" title="18">    <span class="dt">name =</span> conm,</a>
+<a class="sourceLine" id="cb9-19" title="19">    <span class="dt">shares =</span> cshoc,</a>
+<a class="sourceLine" id="cb9-20" title="20">    adj_price,</a>
+<a class="sourceLine" id="cb9-21" title="21">    mkt_cap,</a>
+<a class="sourceLine" id="cb9-22" title="22">    size</a>
+<a class="sourceLine" id="cb9-23" title="23">  )</a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">monthly_data &lt;-<span class="st"> </span>daily_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb10-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey, iid, month) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb10-3" title="3"><span class="st">  </span><span class="kw">summarise_all</span>(last) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb10-4" title="4"><span class="st">  </span><span class="kw">ungroup</span>()</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1">fundamentals &lt;-</a>
+<a class="sourceLine" id="cb11-2" title="2"><span class="st">  </span><span class="kw">read_csv</span>(</a>
+<a class="sourceLine" id="cb11-3" title="3">    <span class="dt">file =</span> <span class="st">&quot;Compustat_Fundamentals.csv&quot;</span>,</a>
+<a class="sourceLine" id="cb11-4" title="4">    <span class="dt">col_types =</span> <span class="kw">cols</span>(</a>
+<a class="sourceLine" id="cb11-5" title="5">      <span class="dt">gvkey =</span> <span class="kw">col_character</span>(),</a>
+<a class="sourceLine" id="cb11-6" title="6">      <span class="dt">datadate =</span> <span class="kw">col_date</span>(<span class="dt">format =</span> <span class="st">&quot;%Y%m%d&quot;</span>),</a>
+<a class="sourceLine" id="cb11-7" title="7">      <span class="dt">ceqq =</span> <span class="kw">col_number</span>()</a>
+<a class="sourceLine" id="cb11-8" title="8">    ),</a>
+<a class="sourceLine" id="cb11-9" title="9">    <span class="dt">na =</span> <span class="kw">c</span>(<span class="st">&quot;N/A&quot;</span>, <span class="st">&quot;&quot;</span>)</a>
+<a class="sourceLine" id="cb11-10" title="10">  )</a>
+<a class="sourceLine" id="cb11-11" title="11"></a>
+<a class="sourceLine" id="cb11-12" title="12">primary_issue &lt;-<span class="st"> </span>fundamentals <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-13" title="13"><span class="st">  </span><span class="kw">group_by</span>(gvkey, conm) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-14" title="14"><span class="st">  </span><span class="kw">distinct</span>(prirow) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-15" title="15"><span class="st">  </span><span class="kw">drop_na</span>()</a></code></pre></div>
+<p>lo bueno</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1">monthly_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb12-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb12-3" title="3"><span class="st">  </span><span class="kw">filter</span>(</a>
+<a class="sourceLine" id="cb12-4" title="4">    <span class="kw">n_distinct</span>(iid) <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span></a>
+<a class="sourceLine" id="cb12-5" title="5"><span class="st">    </span>gvkey <span class="op">%in%</span><span class="st"> </span>primary_issue<span class="op">$</span>gvkey</a>
+<a class="sourceLine" id="cb12-6" title="6">  )</a></code></pre></div>
+<pre><code>## # A tibble: 39,042 x 9
+## # Groups:   gvkey [262]
+##    gvkey  iid        month date       name        shares adj_price mkt_cap  size
+##    &lt;chr&gt;  &lt;chr&gt;      &lt;mth&gt; &lt;date&gt;     &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
+##  1 005832 01W    1996 sep. 1996-09-18 IEM-INDUST~ 1.65e7      4.16    63.8  4.16
+##  2 005832 01W    1997 nov. 1997-11-28 IEM-INDUST~ 1.65e7      3.88    59.5  4.09
+##  3 010755 01W    1986 ene. 1986-01-31 TUBOS DE A~ 1.68e7     64     5376    8.59
+##  4 010755 01W    1986 feb. 1986-02-25 TUBOS DE A~ 1.68e7     64     5376    8.59
+##  5 010755 01W    1986 mar. 1986-03-11 TUBOS DE A~ 1.68e7     62     5208    8.56
+##  6 010755 01W    1986 may. 1986-05-06 TUBOS DE A~ 1.68e7     62     5208    8.56
+##  7 010755 01W    1986 jun. 1986-06-30 TUBOS DE A~ 1.68e7     58     4872    8.49
+##  8 010755 01W    1986 jul. 1986-07-01 TUBOS DE A~ 1.68e7     57     4788    8.47
+##  9 010755 01W    1986 ago. 1986-08-13 TUBOS DE A~ 1.68e7     57     4788    8.47
+## 10 010755 01W    1986 sep. 1986-09-29 TUBOS DE A~ 1.68e7     57     4788    8.47
+## # ... with 39,032 more rows</code></pre>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">monthly_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb14-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb14-3" title="3"><span class="st">  </span><span class="kw">filter</span>(</a>
+<a class="sourceLine" id="cb14-4" title="4">    <span class="kw">n_distinct</span>(iid) <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb14-5" title="5">    <span class="op">!</span>gvkey <span class="op">%in%</span><span class="st"> </span>primary_issue<span class="op">$</span>gvkey</a>
+<a class="sourceLine" id="cb14-6" title="6">  ) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb14-7" title="7"><span class="st">  </span><span class="kw">count</span>(name, iid) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb14-8" title="8"><span class="st">  </span><span class="kw">print</span>(., <span class="dt">n =</span> <span class="dv">71</span>)</a></code></pre></div>
+<pre><code>## # A tibble: 71 x 4
+## # Groups:   gvkey [29]
+##    gvkey  name                         iid       n
+##    &lt;chr&gt;  &lt;chr&gt;                        &lt;chr&gt; &lt;int&gt;
+##  1 019625 TELMEX-TELEFONOS DE MEXICO   01W     298
+##  2 019625 TELMEX-TELEFONOS DE MEXICO   02W     260
+##  3 019625 TELMEX-TELEFONOS DE MEXICO   03W      15
+##  4 019625 TELMEX-TELEFONOS DE MEXICO   04W      11
+##  5 019625 TELMEX-TELEFONOS DE MEXICO   05W       5
+##  6 019625 TELMEX-TELEFONOS DE MEXICO   06W       9
+##  7 020505 GRUPO CONDUMEX SA DE CV      01W     122
+##  8 020505 GRUPO CONDUMEX SA DE CV      02W      29
+##  9 021631 GRUPO SIDEK SA DE CV         01W      78
+## 10 021631 GRUPO SIDEK SA DE CV         02W      87
+## 11 021631 GRUPO SIDEK SA DE CV         04W      18
+## 12 023482 SYNKRO SA DE CV              01W      54
+## 13 023482 SYNKRO SA DE CV              02W     168
+## 14 023482 SYNKRO SA DE CV              03W      51
+## 15 028017 CONSORCIO G GRUPO DINA SA    01W      89
+## 16 028017 CONSORCIO G GRUPO DINA SA    02W       2
+## 17 029327 GRUPO FINANCIERO SERFIN SA   01W      54
+## 18 029327 GRUPO FINANCIERO SERFIN SA   02W      46
+## 19 029327 GRUPO FINANCIERO SERFIN SA   03W      94
+## 20 029327 GRUPO FINANCIERO SERFIN SA   04W      24
+## 21 030363 GPO FIN INVERMEXIC           01W      45
+## 22 030363 GPO FIN INVERMEXIC           02W      17
+## 23 030677 GRUPO FINANCIERO BANAMEX ACC 01W      88
+## 24 030677 GRUPO FINANCIERO BANAMEX ACC 02W     118
+## 25 030677 GRUPO FINANCIERO BANAMEX ACC 03W      44
+## 26 030677 GRUPO FINANCIERO BANAMEX ACC 04W      80
+## 27 031220 GRUPO FINANCIERO BANCRECER   02W      19
+## 28 031220 GRUPO FINANCIERO BANCRECER   03W      26
+## 29 180181 TELMEX INTERNACIONAL SAB DE  01W      35
+## 30 180181 TELMEX INTERNACIONAL SAB DE  02W      35
+## 31 200064 AEROVIAS DE MEXICO SA DE CV  01W      45
+## 32 200064 AEROVIAS DE MEXICO SA DE CV  02W      43
+## 33 200537 BCO NAC MEXICO               01W       4
+## 34 200537 BCO NAC MEXICO               02W      15
+## 35 200537 BCO NAC MEXICO               03W      15
+## 36 200544 BANCOMER SNC                 01W       4
+## 37 200544 BANCOMER SNC                 02W      17
+## 38 201339 SAN CRISTOBAL SA             01W      44
+## 39 201339 SAN CRISTOBAL SA             02W       2
+## 40 202767 JOHN DEERE SA DE CV          01W      41
+## 41 202767 JOHN DEERE SA DE CV          02W       1
+## 42 204477 SISTEMA AXIS SA              01W      28
+## 43 204477 SISTEMA AXIS SA              02W      43
+## 44 205318 INDUSTRIAS NACOBRE SA DE CV  01W      90
+## 45 205318 INDUSTRIAS NACOBRE SA DE CV  02W      10
+## 46 205319 NADRO SA DE CV               01W      91
+## 47 205319 NADRO SA DE CV               02W      60
+## 48 211933 GRUPO INDUSTRIAL ATENQUIQUE  01W       3
+## 49 211933 GRUPO INDUSTRIAL ATENQUIQUE  02W       1
+## 50 211933 GRUPO INDUSTRIAL ATENQUIQUE  03W       1
+## 51 212721 COPPEL SA DE CV              01W      17
+## 52 212721 COPPEL SA DE CV              02W       1
+## 53 212732 REGIO EMPRESAS SA DE CV      01W      36
+## 54 212732 REGIO EMPRESAS SA DE CV      02W       8
+## 55 212758 SOCIEDAD ELECTROMECANICA SA  01W       3
+## 56 212758 SOCIEDAD ELECTROMECANICA SA  02W       1
+## 57 220500 ALUMSA ALUMINIO SA DE CV     01W      13
+## 58 220500 ALUMSA ALUMINIO SA DE CV     02W       7
+## 59 220515 TELEINDUSTRIA ERICCSON SA    01W      40
+## 60 220515 TELEINDUSTRIA ERICCSON SA    04W      41
+## 61 221542 GRUPO ICONSA SA DE CV        01W      12
+## 62 221542 GRUPO ICONSA SA DE CV        02W      20
+## 63 221560 GRUPO MACMA SA DE CV         01W      62
+## 64 221560 GRUPO MACMA SA DE CV         02W      21
+## 65 221592 MAQUINARIA DIESEL SA DE CV   01W      48
+## 66 221592 MAQUINARIA DIESEL SA DE CV   02W      53
+## 67 221603 CAMPUS SA DE CV              02W       6
+## 68 221603 CAMPUS SA DE CV              03W       6
+## 69 243297 VALORES MONTERREY AETNA SA   01W       1
+## 70 243297 VALORES MONTERREY AETNA SA   02W       1
+## 71 243297 VALORES MONTERREY AETNA SA   03W       1</code></pre>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">daily_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb16-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey, iid,name) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb16-3" title="3"><span class="st">  </span><span class="kw">count</span>() <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb16-4" title="4"><span class="st">  </span><span class="kw">arrange</span>(n) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb16-5" title="5"><span class="st">  </span><span class="kw">print</span>(., <span class="dt">n =</span> <span class="dv">291</span>)</a></code></pre></div>
+<pre><code>## # A tibble: 424 x 4
+## # Groups:   gvkey, iid, name [424]
+##     gvkey  iid   name                             n
+##     &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;                        &lt;int&gt;
+##   1 202767 02W   JOHN DEERE SA DE CV              1
+##   2 205703 01W   TUBACERO SA                      1
+##   3 211812 01W   GRUPO FINANCIERO MEXIVAL SA      1
+##   4 211933 02W   GRUPO INDUSTRIAL ATENQUIQUE      1
+##   5 211933 03W   GRUPO INDUSTRIAL ATENQUIQUE      1
+##   6 212721 02W   COPPEL SA DE CV                  1
+##   7 212727 02W   INDUSTRIAS CH SA DE CV           1
+##   8 212758 02W   SOCIEDAD ELECTROMECANICA SA      1
+##   9 213348 01W   REASEGUROS ALIANZA               1
+##  10 220514 01W   REAL TURISMO SA DE CV            1
+##  11 221361 01W   A C MEXICANA SA DE CV            1
+##  12 221375 01W   EPN SA DE CV                     1
+##  13 221538 02W   GRUPO CALINDA SA DE CV           1
+##  14 224737 01W   PLAVICO SA DE CV                 1
+##  15 243297 01W   VALORES MONTERREY AETNA SA       1
+##  16 243297 02W   VALORES MONTERREY AETNA SA       1
+##  17 243297 03W   VALORES MONTERREY AETNA SA       1
+##  18 243299 01W   HULERA EUZKADI SA                1
+##  19 276365 01W   REASEGURADORA PATRIA SAB         1
+##  20 028017 02W   CONSORCIO G GRUPO DINA SA        2
+##  21 030466 02W   BIO PAPPEL SAB DE CV             2
+##  22 005832 01W   IEM-INDUSTRIA ELEC MEXICO SA     3
+##  23 201753 02W   EDITORIAL DIANA SA DE CV         3
+##  24 212730 01W   PORCELANITE SA DE CV             3
+##  25 211935 01W   GRUPO FINANCIERO CREMI           4
+##  26 212758 01W   SOCIEDAD ELECTROMECANICA SA      4
+##  27 201339 02W   SAN CRISTOBAL SA                 5
+##  28 202682 02W   GRUPO CORVI SA                   6
+##  29 211933 01W   GRUPO INDUSTRIAL ATENQUIQUE      8
+##  30 220500 02W   ALUMSA ALUMINIO SA DE CV         8
+##  31 212720 01W   CONSORCIO ARISTOS SA DE CV      10
+##  32 220491 01W   BEROL SA DE CV                  10
+##  33 221603 02W   CAMPUS SA DE CV                 10
+##  34 019625 05W   TELMEX-TELEFONOS DE MEXICO      11
+##  35 220509 01W   GRUPO MEXICO SAB DE CV          11
+##  36 220509 04W   GRUPO MEXICO SAB DE CV          12
+##  37 221603 03W   CAMPUS SA DE CV                 12
+##  38 242701 01W   ECE SA DE CV                    12
+##  39 019625 06W   TELMEX-TELEFONOS DE MEXICO      13
+##  40 019625 04W   TELMEX-TELEFONOS DE MEXICO      20
+##  41 200544 01W   BANCOMER SNC                    20
+##  42 212732 02W   REGIO EMPRESAS SA DE CV         20
+##  43 202550 02W   ORGANIZACION CULTIBA SAB DE     22
+##  44 205318 02W   INDUSTRIAS NACOBRE SA DE CV     26
+##  45 212728 01W   CONDUCTORES LATINCASA SA CV     26
+##  46 201338 01W   CRISOBA A (OLD)                 29
+##  47 200669 01W   BCO MEXICANO                    30
+##  48 212731 01W   MEXICHEM SA DE CV               30
+##  49 222057 02W   ACCEL SAB DE CV                 34
+##  50 221537 02W   CORP MOCTEZUMA SAB DE CV        35
+##  51 220500 01W   ALUMSA ALUMINIO SA DE CV        39
+##  52 061761 01W   GRUPO ELEKTRA SA DE CV          41
+##  53 212756 02W   Q B INDUSTRIAS SA DE CV         41
+##  54 221542 02W   GRUPO ICONSA SA DE CV           41
+##  55 212586 01W   INVERCORPORACION SA DE CV       43
+##  56 221542 01W   GRUPO ICONSA SA DE CV           43
+##  57 212721 01W   COPPEL SA DE CV                 51
+##  58 201753 01W   EDITORIAL DIANA SA DE CV        54
+##  59 221560 02W   GRUPO MACMA SA DE CV            54
+##  60 242769 01W   LATINOAMERICANA DUTY FREE SA    54
+##  61 021631 04W   GRUPO SIDEK SA DE CV            55
+##  62 200537 01W   BCO NAC MEXICO                  61
+##  63 105111 04W   INDUSTRIAS PENOLES SAB DE CV    62
+##  64 221377 01W   FERRIONI SA DE CV               65
+##  65 030331 01W   GRUPO IUSACELL SA               66
+##  66 201737 01W   EATON MANUFACTURERA SA DE CV    68
+##  67 211942 01W   CASA DE BOLSA FINAMEX SAB DE    70
+##  68 247694 01W   MAIZORO SA DE CV                71
+##  69 024650 02W   GRUPO CARSO SA DE CV            74
+##  70 202550 01W   ORGANIZACION CULTIBA SAB DE     77
+##  71 220508 04W   GRUPO INDUSTRIAL MASECA         80
+##  72 247701 01W   CONVERTIDORA INDUSTRIAL SAB     83
+##  73 329384 02W   HSBC-DL S.A. DE C.V.            83
+##  74 025388 01W   GVIDEO-GRUPO VIDEO SA DE CV     87
+##  75 019625 03W   TELMEX-TELEFONOS DE MEXICO      92
+##  76 221550 01W   Q TEL SA DE CV                  92
+##  77 106743 01W   GRUPO MINSA S A DE C V          97
+##  78 243479 01W   ACCIONES VALORES MEXICO SA      97
+##  79 221558 01W   FOTOLUZ CORPORACION SA DE CV   101
+##  80 030462 04W   GRUPO KUO SAB DE CV            103
+##  81 212732 01W   REGIO EMPRESAS SA DE CV        105
+##  82 206298 02W   HYLSAMEX SA DE CV              107
+##  83 200537 03W   BCO NAC MEXICO                 112
+##  84 221577 02W   INTERAMERICANA ENTRTENMIENTO   112
+##  85 200537 02W   BCO NAC MEXICO                 115
+##  86 031220 02W   GRUPO FINANCIERO BANCRECER     121
+##  87 257287 02W   GENERAL DE SEGUROS SAB         121
+##  88 201012 02W   ORBIA ADVANCE CORP SAB DE CV   127
+##  89 208777 02W   GRUPO SANBORN SA DE CV         129
+##  90 257287 01W   GENERAL DE SEGUROS SAB         131
+##  91 025387 02W   GRUPO VIDEO VISA SA DE CV      136
+##  92 220515 04W   TELEINDUSTRIA ERICCSON SA      138
+##  93 202767 01W   JOHN DEERE SA DE CV            140
+##  94 222057 01W   ACCEL SAB DE CV                143
+##  95 221560 01W   GRUPO MACMA SA DE CV           144
+##  96 106545 01W   G ACCION SA DE CV              145
+##  97 321042 01W   TELESITES SAB DE CV            149
+##  98 321042 02W   TELESITES SAB DE CV            149
+##  99 220497 01W   EMPRESAS FRISCO SA DE CV       150
+## 100 200587 01W   BANORO                         153
+## 101 030363 02W   GPO FIN INVERMEXIC             154
+## 102 221592 01W   MAQUINARIA DIESEL SA DE CV     154
+## 103 212723 01W   GRUPO PALACIO DE HIERRO        155
+## 104 030331 02W   GRUPO IUSACELL SA              158
+## 105 220490 02W   APASCO SA DE CV                159
+## 106 242243 01W   EMBOTELLADORA ARGOS SA DE      165
+## 107 202262 01W   BANACCI                        178
+## 108 105111 03W   INDUSTRIAS PENOLES SAB DE CV   183
+## 109 200946 01W   MULTIBANCO COMERMEX SA         185
+## 110 220509 02W   GRUPO MEXICO SAB DE CV         189
+## 111 202025 01W   UCAR CARBON MEXICANA SA DE C   190
+## 112 200542 01W   BANCO INTERNATIONA             196
+## 113 249446 01W   GRUPO FINANCIERO BITAL SA CV   196
+## 114 202569 02W   GRUPO INDUSTRIAL SALTILLO      197
+## 115 220515 01W   TELEINDUSTRIA ERICCSON SA      198
+## 116 220509 05W   GRUPO MEXICO SAB DE CV         203
+## 117 029850 02W   GRUPO TELEVISA SAB             212
+## 118 020505 02W   GRUPO CONDUMEX SA DE CV        221
+## 119 247701 02W   CONVERTIDORA INDUSTRIAL SAB    227
+## 120 023482 03W   SYNKRO SA DE CV                238
+## 121 269997 02W   CIBANCO SA                     239
+## 122 200752 01W   GRUPO BIMBO SA DE CV           244
+## 123 200544 02W   BANCOMER SNC                   254
+## 124 028170 02W   PEPSI-GEMEX SA DE CV           266
+## 125 201339 01W   SAN CRISTOBAL SA               268
+## 126 220508 02W   GRUPO INDUSTRIAL MASECA        271
+## 127 221551 01W   GRUPO FILA-DIXON SA            273
+## 128 243388 01W   UNEFON SA DE CV                274
+## 129 206298 03W   HYLSAMEX SA DE CV              280
+## 130 023482 01W   SYNKRO SA DE CV                281
+## 131 221592 02W   MAQUINARIA DIESEL SA DE CV     281
+## 132 203296 01W   INDS RESISTOL SA               284
+## 133 029400 02W   GRUPO MEXICANO DESARROLLO      286
+## 134 212724 01W   GPO PROF PLANEACION Y PROYEC   287
+## 135 200064 01W   AEROVIAS DE MEXICO SA DE CV    288
+## 136 220508 01W   GRUPO INDUSTRIAL MASECA        289
+## 137 031220 03W   GRUPO FINANCIERO BANCRECER     305
+## 138 029327 04W   GRUPO FINANCIERO SERFIN SA     307
+## 139 221497 02W   ALFA SAB DE CV                 313
+## 140 325138 01W   BANCO AZTECA                   315
+## 141 211934 01W   GRUPO FINANCIERO BANORTE SA    319
+## 142 030363 01W   GPO FIN INVERMEXIC             333
+## 143 029327 02W   GRUPO FINANCIERO SERFIN SA     335
+## 144 029186 01W   EMPAQUES PONDEROSA SA          350
+## 145 201012 01W   ORBIA ADVANCE CORP SAB DE CV   356
+## 146 200887 01W   CMA                            363
+## 147 201359 02W   CYDSA SA                       368
+## 148 243298 01W   UNION CARBIDE MEXICANA SA      368
+## 149 328121 01W   BANCO INVEX SA                 369
+## 150 201300 01W   CONTROLADORA COMERCIAL MEX     374
+## 151 227311 01W   INDUSTRIA AUTOMOTRIZ SA        380
+## 152 025365 01W   GRUPO TMM S.A.B                384
+## 153 200752 02W   GRUPO BIMBO SA DE CV           386
+## 154 278202 01W   VERZATEC SA DE CV              387
+## 155 106747 03W   GRUPO HERDEZ SAB DE CV         390
+## 156 200588 01W   BCO MERC DEL NORTE             413
+## 157 297013 01W   GRUPO AZUCARERO MEXICO SAB     428
+## 158 220495 01W   CIA MINERA AUTLAN SA DE CV     430
+## 159 326902 01W   PROMECAP ACQN CO               438
+## 160 204477 01W   SISTEMA AXIS SA                442
+## 161 220508 03W   GRUPO INDUSTRIAL MASECA        444
+## 162 326715 01W   CFE CAPITAL S DE RL DE CV      458
+## 163 202553 02W   GRUPO FINANCIERO INBURSA SA    461
+## 164 211938 01W   BITALPF SA DE CV               462
+## 165 222855 01W   SPICER SA DE CV                482
+## 166 202569 01W   GRUPO INDUSTRIAL SALTILLO      487
+## 167 029327 01W   GRUPO FINANCIERO SERFIN SA     492
+## 168 029123 01W   BUFETE INDUSTRIAL SA           512
+## 169 325920 01W   GMEXICO TRANSPORTE             533
+## 170 221524 01W   GRUPO QUMMA SA DE CV           544
+## 171 029795 01W   SEARS ROEBUCK DE MEXICO SA     548
+## 172 105111 02W   INDUSTRIAS PENOLES SAB DE CV   555
+## 173 206359 01W   SEGUROS COMERCIAL AMERICA SA   557
+## 174 205318 01W   INDUSTRIAS NACOBRE SA DE CV    561
+## 175 325571 01W   GRUPO TRAXION S A B DE CV      563
+## 176 208404 01W   CIA INDUSTRIAL DE PARRAS SA    567
+## 177 213659 01W   ACER COMPUTEC LATINO AMERICA   584
+## 178 208772 02W   RASSINI SAB DE CV              586
+## 179 113919 01W   MOVILACCESS SA                 596
+## 180 209218 01W   TREMEC-TRANS Y EQUIP MECANIC   597
+## 181 325211 01W   VISTA OIL &amp; GAS CO             597
+## 182 325221 01W   FONDO DEUDA MERCADO 1 SA DE    597
+## 183 211943 01W   SIGMA ALIMENTOS SA DE CV       601
+## 184 220510 01W   MEXICANA DE AVIACION SA        610
+## 185 211936 01W   EMBOTELLADORES VALLE ANAHUAC   626
+## 186 291854 01W   BANCO DEL BAJIO                644
+## 187 203797 02W   GRUPO LA MODERNA SA            646
+## 188 180181 02W   TELMEX INTERNACIONAL SAB DE    656
+## 189 021631 01W   GRUPO SIDEK SA DE CV           659
+## 190 200064 02W   AEROVIAS DE MEXICO SA DE CV    663
+## 191 025350 04W   GPO FINANCIERO BBVA BANCOMER   667
+## 192 028541 01W   GRUPO RADIO CENTRO SA DE CV    675
+## 193 204477 02W   SISTEMA AXIS SA                704
+## 194 323433 01W   BECLE SAB DE CV                728
+## 195 208777 01W   GRUPO SANBORN SA DE CV         729
+## 196 180181 01W   TELMEX INTERNACIONAL SAB DE    741
+## 197 203963 01W   TEXEL SA DE CV                 741
+## 198 269997 01W   CIBANCO SA                     751
+## 199 321174 01W   GBM PORTAFOLIO PIGGO DEUDA     760
+## 200 209427 01W   VALORES INDUSTRIALES SA        761
+## 201 030331 03W   GRUPO IUSACELL SA              772
+## 202 201138 01W   CERVECERIA MOCTEZ              783
+## 203 272659 01W   IXE GRUPO FINANCIERA SA        797
+## 204 030677 03W   GRUPO FINANCIERO BANAMEX ACC   798
+## 205 322571 01W   VINTE VIVIENDAS INTEGRALES     823
+## 206 205319 01W   NADRO SA DE CV                 848
+## 207 205319 02W   NADRO SA DE CV                 866
+## 208 321042 04W   TELESITES SAB DE CV            877
+## 209 321885 01W   PLANIGRUPO LATAM SAB DE CV     889
+## 210 025365 03W   GRUPO TMM S.A.B                915
+## 211 220489 01W   ALTOS HORNOS DE MEXICO         962
+## 212 321461 01W   ACTINVER TRACS SERIES 16       966
+## 213 296584 01W   SERVICIOS CORP JAVER SAPI DE  1010
+## 214 203797 01W   GRUPO LA MODERNA SA           1017
+## 215 321103 01W   LA COMER SAB DE CV            1019
+## 216 029186 02W   EMPAQUES PONDEROSA SA         1028
+## 217 105111 01W   INDUSTRIAS PENOLES SAB DE CV  1036
+## 218 296589 01W   CORPOVAEL SA DE CV            1038
+## 219 211941 01W   GPO FINANCIERO BBV PROBURSA   1062
+## 220 020505 01W   GRUPO CONDUMEX SA DE CV       1073
+## 221 025350 03W   GPO FINANCIERO BBVA BANCOMER  1103
+## 222 221586 01W   GRUPO MARTI SA                1103
+## 223 296665 01W   ELEMENTIA SA DE CV            1143
+## 224 030677 01W   GRUPO FINANCIERO BANAMEX ACC  1144
+## 225 269422 01W   NEMAK SAB DE CV               1150
+## 226 284596 01W   BANCO COMPARTAMOS SA          1155
+## 227 320521 01W   BANCO ACTINVER SA             1165
+## 228 269436 01W   GRUPO GICSA SA DE CV          1169
+## 229 010755 02W   TUBOS DE ACERO DE MEXICO      1170
+## 230 319746 01W   UNIFIN FINANCIERA SAB DE CV   1178
+## 231 148549 01W   AMERICA TELECOM SA DE CV      1182
+## 232 258677 01W   FONDO SANTANDER DEUDA PATRIM  1182
+## 233 025350 01W   GPO FINANCIERO BBVA BANCOMER  1207
+## 234 319492 01W   ACTINVER CASA DE BOL TR 1938  1216
+## 235 025365 02W   GRUPO TMM S.A.B               1251
+## 236 220509 03W   GRUPO MEXICO SAB DE CV        1258
+## 237 021631 02W   GRUPO SIDEK SA DE CV          1274
+## 238 296431 01W   INMUEBLES CARSO SAB DE CV     1279
+## 239 028017 01W   CONSORCIO G GRUPO DINA SA     1292
+## 240 324337 02W   FIBRA MTY SAPI DE CV          1294
+## 241 291185 01W   GRUPO ROTOPLAS S.A. DE C.V.   1295
+## 242 269418 01W   FIDEICOMISO IRREVOCABLE       1317
+## 243 318623 01W   ISHARES S&amp;P 500 PESO HEDGED   1319
+## 244 318622 01W   NACIONAL FIN SNC DESARROLLO   1320
+## 245 318361 01W   GRUPO HOTEL SANTA FE          1358
+## 246 318315 01W   ACTINVER CASA DE BOLSA SA     1371
+## 247 028888 03W   PROMOTORA Y OPERADORA INFRAE  1400
+## 248 149539 01W   US COMMERCIAL CORP SA         1404
+## 249 030677 04W   GRUPO FINANCIERO BANAMEX ACC  1408
+## 250 105091 02W   CELANESE                      1419
+## 251 317810 01W   FIBRA PROLOGIS                1420
+## 252 287903 01W   GMD RESORTS SAB               1428
+## 253 252598 01W   GRUPO COMERCIAL GOMO SA       1439
+## 254 029190 01W   GRUPO SITUR SA DE CV          1452
+## 255 208777 03W   GRUPO SANBORN SA DE CV        1469
+## 256 105089 03W   CEMEX SAB DE CV               1487
+## 257 105104 01W   WAL MART DE MEXICO SA         1489
+## 258 325080 01W   PROCORP S A B DE C V          1497
+## 259 030331 04W   GRUPO IUSACELL SA             1498
+## 260 028170 01W   PEPSI-GEMEX SA DE CV          1533
+## 261 029327 03W   GRUPO FINANCIERO SERFIN SA    1586
+## 262 311301 01W   GRUPO LALA SAB DE CV          1595
+## 263 316266 01W   CONCENTRADORA FIBRA DANHOS    1600
+## 264 221587 01W   GRUPO NUTRISA SA DE CV        1601
+## 265 296697 01W   CONTROLADORA VUELA COMPANIA   1614
+## 266 201300 02W   CONTROLADORA COMERCIAL MEX    1629
+## 267 023482 02W   SYNKRO SA DE CV               1636
+## 268 315924 01W   NACIONAL FINANCIERA SNC       1645
+## 269 315853 01W   FIBRA SHOP PORTAFOLIOS INM    1654
+## 270 274327 01W   CARSO INFRAESTRUCTURA Y CONS  1668
+## 271 311298 01W   HOTELES CITY EXPRESS SA       1683
+## 272 202661 01W   CONSORCIO AEROMEXICO SA DE C  1685
+## 273 031205 01W   FOMENTO ECONOMICO MEXICANO    1714
+## 274 315210 01W   FIBRA INN                     1720
+## 275 247839 01W   TEKCHEM SA DE CV              1730
+## 276 315108 01W   INFRA ENERGETICA NOVA SA      1743
+## 277 315140 01W   FIBRA TERRAFINA               1745
+## 278 221105 01W   JUGOS DEL VALLE SA DE CV      1764
+## 279 208777 04W   GRUPO SANBORN SA DE CV        1771
+## 280 269433 01W   CIBANCO SA INSTIT             1779
+## 281 277428 01W   QUALITAS COMPANIA DE SEGUROS  1779
+## 282 314448 01W   CONCENTRADORA FIBRA HOTELERA  1812
+## 283 268563 01W   CREDITO REAL SAB DE CV        1854
+## 284 031207 01W   GRUPO CEMENTOS DE CHIHUAHUA   1895
+## 285 313311 01W   CORP INMOBILIARIA VESTA SAB   1917
+## 286 313302 01W   QUALITAS CONTROLADORA SAB     1919
+## 287 105089 02W   CEMEX SAB DE CV               1946
+## 288 025587 01W   TOLMEX SA DE CV               1955
+## 289 312416 01W   ALPEK SAB DE CV               1979
+## 290 312197 01W   PROTEAK UNO SAB DE CV         1996
+## 291 311629 01W   MONEX SAB DE CV               2034
+## # ... with 133 more rows</code></pre>
 </div>
 
 

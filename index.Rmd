@@ -8,28 +8,98 @@ output:
     toc: false
     self_contained: false
     number_sections: false
+editor_options: 
+  chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+library(tidyverse)
+library(tsibble)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+raw_data <- read_csv(
+  file = "Compustat_Global_daily.csv",
+  col_types = cols(
+    sedol = col_character(),
+    datadate = col_date(format = "%Y%m%d")
+  )
+)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure}
-plot(pressure)
+```{r}
+daily_data <- raw_data %>% 
+  filter(
+    exchg == 208,
+    curcdd %in% c("MXP", "MXN")
+    ) %>% 
+  mutate(
+    prccd = if_else(prccd == "MXP", prccd / 1000, prccd),
+    adj_price = (prccd / ajexdi) * trfd,
+    mkt_cap = prccd * cshoc / 1e6,
+    size = log(mkt_cap),
+    month = yearmonth(datadate)
+  ) %>% 
+  select(
+    gvkey,
+    iid,
+    date = datadate,
+    month,
+    name = conm,
+    shares = cshoc,
+    adj_price,
+    mkt_cap,
+    size
+  )
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+monthly_data <- daily_data %>% 
+  group_by(gvkey, iid, month) %>% 
+  summarise_all(last) %>% 
+  ungroup()
+```
+
+```{r}
+fundamentals <-
+  read_csv(
+    file = "Compustat_Fundamentals.csv",
+    col_types = cols(
+      gvkey = col_character(),
+      datadate = col_date(format = "%Y%m%d"),
+      ceqq = col_number()
+    ),
+    na = c("N/A", "")
+  )
+
+primary_issue <- fundamentals %>% 
+  group_by(gvkey, conm) %>% 
+  distinct(prirow) %>% 
+  drop_na()
+```
+
+lo bueno
+```{r}
+monthly_data %>% 
+  group_by(gvkey) %>% 
+  filter(
+    n_distinct(iid) == 1 |
+    gvkey %in% primary_issue$gvkey
+  )
+
+monthly_data %>% 
+  group_by(gvkey) %>% 
+  filter(
+    n_distinct(iid) > 1,
+    !gvkey %in% primary_issue$gvkey
+  ) %>% 
+  count(name, iid) %>% 
+  print(., n = 71)
+
+daily_data %>% 
+  group_by(gvkey, iid,name) %>% 
+  count() %>% 
+  arrange(n) %>% 
+  print(., n = 291)
+```
+
