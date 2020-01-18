@@ -121,100 +121,73 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 
 <div class="main">
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(tidyverse)</a></code></pre></div>
-<pre><code>## -- Attaching packages ------------------------------------ tidyverse 1.3.0 --</code></pre>
-<pre><code>## v ggplot2 3.2.1     v purrr   0.3.3
-## v tibble  2.1.3     v dplyr   0.8.3
-## v tidyr   1.0.0     v stringr 1.4.0
-## v readr   1.3.1     v forcats 0.4.0</code></pre>
-<pre><code>## -- Conflicts --------------------------------------- tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()</code></pre>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">library</span>(tsibble)</a></code></pre></div>
-<pre><code>## 
-## Attaching package: &#39;tsibble&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     id</code></pre>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">raw_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(</a>
-<a class="sourceLine" id="cb8-2" title="2">  <span class="dt">file =</span> <span class="st">&quot;Compustat_Global_daily.csv&quot;</span>,</a>
-<a class="sourceLine" id="cb8-3" title="3">  <span class="dt">col_types =</span> <span class="kw">cols</span>(</a>
-<a class="sourceLine" id="cb8-4" title="4">    <span class="dt">sedol =</span> <span class="kw">col_character</span>(),</a>
-<a class="sourceLine" id="cb8-5" title="5">    <span class="dt">datadate =</span> <span class="kw">col_date</span>(<span class="dt">format =</span> <span class="st">&quot;%Y%m%d&quot;</span>)</a>
-<a class="sourceLine" id="cb8-6" title="6">  )</a>
-<a class="sourceLine" id="cb8-7" title="7">)</a></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">daily_data &lt;-<span class="st"> </span>raw_data <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb9-2" title="2"><span class="st">  </span><span class="kw">filter</span>(</a>
-<a class="sourceLine" id="cb9-3" title="3">    exchg <span class="op">==</span><span class="st"> </span><span class="dv">208</span>,</a>
-<a class="sourceLine" id="cb9-4" title="4">    curcdd <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;MXP&quot;</span>, <span class="st">&quot;MXN&quot;</span>)</a>
-<a class="sourceLine" id="cb9-5" title="5">    ) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb9-6" title="6"><span class="st">  </span><span class="kw">mutate</span>(</a>
-<a class="sourceLine" id="cb9-7" title="7">    <span class="dt">prccd =</span> <span class="kw">if_else</span>(prccd <span class="op">==</span><span class="st"> &quot;MXP&quot;</span>, prccd <span class="op">/</span><span class="st"> </span><span class="dv">1000</span>, prccd),</a>
-<a class="sourceLine" id="cb9-8" title="8">    <span class="dt">adj_price =</span> (prccd <span class="op">/</span><span class="st"> </span>ajexdi) <span class="op">*</span><span class="st"> </span>trfd,</a>
-<a class="sourceLine" id="cb9-9" title="9">    <span class="dt">mkt_cap =</span> prccd <span class="op">*</span><span class="st"> </span>cshoc <span class="op">/</span><span class="st"> </span><span class="fl">1e6</span>,</a>
-<a class="sourceLine" id="cb9-10" title="10">    <span class="dt">size =</span> <span class="kw">log</span>(mkt_cap),</a>
-<a class="sourceLine" id="cb9-11" title="11">    <span class="dt">month =</span> <span class="kw">yearmonth</span>(datadate)</a>
-<a class="sourceLine" id="cb9-12" title="12">  ) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb9-13" title="13"><span class="st">  </span><span class="kw">select</span>(</a>
-<a class="sourceLine" id="cb9-14" title="14">    gvkey,</a>
-<a class="sourceLine" id="cb9-15" title="15">    iid,</a>
-<a class="sourceLine" id="cb9-16" title="16">    <span class="dt">date =</span> datadate,</a>
-<a class="sourceLine" id="cb9-17" title="17">    month,</a>
-<a class="sourceLine" id="cb9-18" title="18">    <span class="dt">name =</span> conm,</a>
-<a class="sourceLine" id="cb9-19" title="19">    <span class="dt">shares =</span> cshoc,</a>
-<a class="sourceLine" id="cb9-20" title="20">    adj_price,</a>
-<a class="sourceLine" id="cb9-21" title="21">    mkt_cap,</a>
-<a class="sourceLine" id="cb9-22" title="22">    size</a>
-<a class="sourceLine" id="cb9-23" title="23">  )</a></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">monthly_data &lt;-<span class="st"> </span>daily_data <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb10-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey, iid, month) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb10-3" title="3"><span class="st">  </span><span class="kw">summarise_all</span>(last) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb10-4" title="4"><span class="st">  </span><span class="kw">ungroup</span>()</a></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1">fundamentals &lt;-</a>
-<a class="sourceLine" id="cb11-2" title="2"><span class="st">  </span><span class="kw">read_csv</span>(</a>
-<a class="sourceLine" id="cb11-3" title="3">    <span class="dt">file =</span> <span class="st">&quot;Compustat_Fundamentals.csv&quot;</span>,</a>
-<a class="sourceLine" id="cb11-4" title="4">    <span class="dt">col_types =</span> <span class="kw">cols</span>(</a>
-<a class="sourceLine" id="cb11-5" title="5">      <span class="dt">gvkey =</span> <span class="kw">col_character</span>(),</a>
-<a class="sourceLine" id="cb11-6" title="6">      <span class="dt">datadate =</span> <span class="kw">col_date</span>(<span class="dt">format =</span> <span class="st">&quot;%Y%m%d&quot;</span>),</a>
-<a class="sourceLine" id="cb11-7" title="7">      <span class="dt">ceqq =</span> <span class="kw">col_number</span>()</a>
-<a class="sourceLine" id="cb11-8" title="8">    ),</a>
-<a class="sourceLine" id="cb11-9" title="9">    <span class="dt">na =</span> <span class="kw">c</span>(<span class="st">&quot;N/A&quot;</span>, <span class="st">&quot;&quot;</span>)</a>
-<a class="sourceLine" id="cb11-10" title="10">  )</a>
-<a class="sourceLine" id="cb11-11" title="11"></a>
-<a class="sourceLine" id="cb11-12" title="12">primary_issue &lt;-<span class="st"> </span>fundamentals <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb11-13" title="13"><span class="st">  </span><span class="kw">group_by</span>(gvkey, conm) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb11-14" title="14"><span class="st">  </span><span class="kw">distinct</span>(prirow) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb11-15" title="15"><span class="st">  </span><span class="kw">drop_na</span>()</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(tidyverse)</a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="kw">library</span>(tsibble)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">raw_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(</a>
+<a class="sourceLine" id="cb2-2" title="2">  <span class="dt">file =</span> <span class="st">&quot;Compustat_Global_daily.csv&quot;</span>,</a>
+<a class="sourceLine" id="cb2-3" title="3">  <span class="dt">col_types =</span> <span class="kw">cols</span>(</a>
+<a class="sourceLine" id="cb2-4" title="4">    <span class="dt">sedol =</span> <span class="kw">col_character</span>(),</a>
+<a class="sourceLine" id="cb2-5" title="5">    <span class="dt">datadate =</span> <span class="kw">col_date</span>(<span class="dt">format =</span> <span class="st">&quot;%Y%m%d&quot;</span>)</a>
+<a class="sourceLine" id="cb2-6" title="6">  )</a>
+<a class="sourceLine" id="cb2-7" title="7">)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">daily_data &lt;-<span class="st"> </span>raw_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="st">  </span><span class="kw">filter</span>(</a>
+<a class="sourceLine" id="cb3-3" title="3">    exchg <span class="op">==</span><span class="st"> </span><span class="dv">208</span>,</a>
+<a class="sourceLine" id="cb3-4" title="4">    curcdd <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;MXP&quot;</span>, <span class="st">&quot;MXN&quot;</span>)</a>
+<a class="sourceLine" id="cb3-5" title="5">    ) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb3-6" title="6"><span class="st">  </span><span class="kw">mutate</span>(</a>
+<a class="sourceLine" id="cb3-7" title="7">    <span class="dt">prccd =</span> <span class="kw">if_else</span>(prccd <span class="op">==</span><span class="st"> &quot;MXP&quot;</span>, prccd <span class="op">/</span><span class="st"> </span><span class="dv">1000</span>, prccd),</a>
+<a class="sourceLine" id="cb3-8" title="8">    <span class="dt">adj_price =</span> (prccd <span class="op">/</span><span class="st"> </span>ajexdi) <span class="op">*</span><span class="st"> </span>trfd,</a>
+<a class="sourceLine" id="cb3-9" title="9">    <span class="dt">mkt_cap =</span> prccd <span class="op">*</span><span class="st"> </span>cshoc <span class="op">/</span><span class="st"> </span><span class="fl">1e6</span>,</a>
+<a class="sourceLine" id="cb3-10" title="10">    <span class="dt">size =</span> <span class="kw">log</span>(mkt_cap),</a>
+<a class="sourceLine" id="cb3-11" title="11">    <span class="dt">month =</span> <span class="kw">yearmonth</span>(datadate)</a>
+<a class="sourceLine" id="cb3-12" title="12">  ) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb3-13" title="13"><span class="st">  </span><span class="kw">select</span>(</a>
+<a class="sourceLine" id="cb3-14" title="14">    gvkey,</a>
+<a class="sourceLine" id="cb3-15" title="15">    iid,</a>
+<a class="sourceLine" id="cb3-16" title="16">    <span class="dt">date =</span> datadate,</a>
+<a class="sourceLine" id="cb3-17" title="17">    month,</a>
+<a class="sourceLine" id="cb3-18" title="18">    <span class="dt">name =</span> conm,</a>
+<a class="sourceLine" id="cb3-19" title="19">    <span class="dt">shares =</span> cshoc,</a>
+<a class="sourceLine" id="cb3-20" title="20">    adj_price,</a>
+<a class="sourceLine" id="cb3-21" title="21">    mkt_cap,</a>
+<a class="sourceLine" id="cb3-22" title="22">    size</a>
+<a class="sourceLine" id="cb3-23" title="23">  )</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">monthly_data &lt;-<span class="st"> </span>daily_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb4-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey, iid, month) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb4-3" title="3"><span class="st">  </span><span class="kw">summarise_all</span>(last) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb4-4" title="4"><span class="st">  </span><span class="kw">ungroup</span>()</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">fundamentals &lt;-</a>
+<a class="sourceLine" id="cb5-2" title="2"><span class="st">  </span><span class="kw">read_csv</span>(</a>
+<a class="sourceLine" id="cb5-3" title="3">    <span class="dt">file =</span> <span class="st">&quot;Compustat_Fundamentals.csv&quot;</span>,</a>
+<a class="sourceLine" id="cb5-4" title="4">    <span class="dt">col_types =</span> <span class="kw">cols</span>(</a>
+<a class="sourceLine" id="cb5-5" title="5">      <span class="dt">gvkey =</span> <span class="kw">col_character</span>(),</a>
+<a class="sourceLine" id="cb5-6" title="6">      <span class="dt">datadate =</span> <span class="kw">col_date</span>(<span class="dt">format =</span> <span class="st">&quot;%Y%m%d&quot;</span>),</a>
+<a class="sourceLine" id="cb5-7" title="7">      <span class="dt">ceqq =</span> <span class="kw">col_number</span>()</a>
+<a class="sourceLine" id="cb5-8" title="8">    ),</a>
+<a class="sourceLine" id="cb5-9" title="9">    <span class="dt">na =</span> <span class="kw">c</span>(<span class="st">&quot;N/A&quot;</span>, <span class="st">&quot;&quot;</span>)</a>
+<a class="sourceLine" id="cb5-10" title="10">  )</a>
+<a class="sourceLine" id="cb5-11" title="11"></a>
+<a class="sourceLine" id="cb5-12" title="12">primary_issue &lt;-<span class="st"> </span>fundamentals <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb5-13" title="13"><span class="st">  </span><span class="kw">group_by</span>(gvkey, conm) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb5-14" title="14"><span class="st">  </span><span class="kw">distinct</span>(prirow) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb5-15" title="15"><span class="st">  </span><span class="kw">drop_na</span>()</a></code></pre></div>
 <p>lo bueno</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1">monthly_data <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb12-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb12-3" title="3"><span class="st">  </span><span class="kw">filter</span>(</a>
-<a class="sourceLine" id="cb12-4" title="4">    <span class="kw">n_distinct</span>(iid) <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span></a>
-<a class="sourceLine" id="cb12-5" title="5"><span class="st">    </span>gvkey <span class="op">%in%</span><span class="st"> </span>primary_issue<span class="op">$</span>gvkey</a>
-<a class="sourceLine" id="cb12-6" title="6">  )</a></code></pre></div>
-<pre><code>## # A tibble: 39,042 x 9
-## # Groups:   gvkey [262]
-##    gvkey  iid        month date       name        shares adj_price mkt_cap  size
-##    &lt;chr&gt;  &lt;chr&gt;      &lt;mth&gt; &lt;date&gt;     &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
-##  1 005832 01W    1996 sep. 1996-09-18 IEM-INDUST~ 1.65e7      4.16    63.8  4.16
-##  2 005832 01W    1997 nov. 1997-11-28 IEM-INDUST~ 1.65e7      3.88    59.5  4.09
-##  3 010755 01W    1986 ene. 1986-01-31 TUBOS DE A~ 1.68e7     64     5376    8.59
-##  4 010755 01W    1986 feb. 1986-02-25 TUBOS DE A~ 1.68e7     64     5376    8.59
-##  5 010755 01W    1986 mar. 1986-03-11 TUBOS DE A~ 1.68e7     62     5208    8.56
-##  6 010755 01W    1986 may. 1986-05-06 TUBOS DE A~ 1.68e7     62     5208    8.56
-##  7 010755 01W    1986 jun. 1986-06-30 TUBOS DE A~ 1.68e7     58     4872    8.49
-##  8 010755 01W    1986 jul. 1986-07-01 TUBOS DE A~ 1.68e7     57     4788    8.47
-##  9 010755 01W    1986 ago. 1986-08-13 TUBOS DE A~ 1.68e7     57     4788    8.47
-## 10 010755 01W    1986 sep. 1986-09-29 TUBOS DE A~ 1.68e7     57     4788    8.47
-## # ... with 39,032 more rows</code></pre>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">monthly_data <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb14-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb14-3" title="3"><span class="st">  </span><span class="kw">filter</span>(</a>
-<a class="sourceLine" id="cb14-4" title="4">    <span class="kw">n_distinct</span>(iid) <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb14-5" title="5">    <span class="op">!</span>gvkey <span class="op">%in%</span><span class="st"> </span>primary_issue<span class="op">$</span>gvkey</a>
-<a class="sourceLine" id="cb14-6" title="6">  ) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb14-7" title="7"><span class="st">  </span><span class="kw">count</span>(name, iid) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb14-8" title="8"><span class="st">  </span><span class="kw">print</span>(., <span class="dt">n =</span> <span class="dv">71</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">monthly_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="st">  </span><span class="kw">filter</span>(</a>
+<a class="sourceLine" id="cb6-4" title="4">    <span class="kw">n_distinct</span>(iid) <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="st">    </span>gvkey <span class="op">%in%</span><span class="st"> </span>primary_issue<span class="op">$</span>gvkey</a>
+<a class="sourceLine" id="cb6-6" title="6">  ) <span class="op">%&gt;%</span><span class="st"> </span>kableExtra<span class="op">::</span><span class="kw">kable</span>(., <span class="dt">format =</span> <span class="st">&quot;latex&quot;</span>)</a></code></pre></div>
+
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">monthly_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb7-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb7-3" title="3"><span class="st">  </span><span class="kw">filter</span>(</a>
+<a class="sourceLine" id="cb7-4" title="4">    <span class="kw">n_distinct</span>(iid) <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb7-5" title="5">    <span class="op">!</span>gvkey <span class="op">%in%</span><span class="st"> </span>primary_issue<span class="op">$</span>gvkey</a>
+<a class="sourceLine" id="cb7-6" title="6">  ) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb7-7" title="7"><span class="st">  </span><span class="kw">count</span>(name, iid) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb7-8" title="8"><span class="st">  </span><span class="kw">print</span>(., <span class="dt">n =</span> <span class="dv">71</span>)</a></code></pre></div>
 <pre><code>## # A tibble: 71 x 4
 ## # Groups:   gvkey [29]
 ##    gvkey  name                         iid       n
@@ -290,11 +263,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## 69 243297 VALORES MONTERREY AETNA SA   01W       1
 ## 70 243297 VALORES MONTERREY AETNA SA   02W       1
 ## 71 243297 VALORES MONTERREY AETNA SA   03W       1</code></pre>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">daily_data <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb16-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey, iid,name) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb16-3" title="3"><span class="st">  </span><span class="kw">count</span>() <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb16-4" title="4"><span class="st">  </span><span class="kw">arrange</span>(n) <span class="op">%&gt;%</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb16-5" title="5"><span class="st">  </span><span class="kw">print</span>(., <span class="dt">n =</span> <span class="dv">291</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">daily_data <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb9-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(gvkey, iid,name) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb9-3" title="3"><span class="st">  </span><span class="kw">count</span>() <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb9-4" title="4"><span class="st">  </span><span class="kw">arrange</span>(n) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb9-5" title="5"><span class="st">  </span><span class="kw">print</span>(., <span class="dt">n =</span> <span class="dv">291</span>)</a></code></pre></div>
 <pre><code>## # A tibble: 424 x 4
 ## # Groups:   gvkey, iid, name [424]
 ##     gvkey  iid   name                             n
