@@ -79,13 +79,13 @@ primary_issue <- fundamentals %>%
 ```
 
 lo bueno
-```{r}
+```{r eval=FALSE}
 monthly_data %>% 
   group_by(gvkey) %>% 
   filter(
     n_distinct(iid) == 1 |
     gvkey %in% primary_issue$gvkey
-  ) %>% kableExtra::kable(., format = "latex")
+  ) 
 
 monthly_data %>% 
   group_by(gvkey) %>% 
@@ -101,5 +101,11 @@ daily_data %>%
   count() %>% 
   arrange(n) %>% 
   print(., n = 291)
+```
+
+```{r}
+monthly_data %>% 
+  slice(1:15) %>% 
+  kableExtra::kable(., format = "latex")
 ```
 
