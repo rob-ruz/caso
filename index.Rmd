@@ -103,9 +103,3 @@ daily_data %>%
   print(., n = 291)
 ```
 
-```{r}
-monthly_data %>% 
-  slice(1:15) %>% 
-  kableExtra::kable(., format = "latex")
-```
-
