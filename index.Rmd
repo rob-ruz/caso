@@ -12,7 +12,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 library(tidyverse)
 library(tsibble)
 ```
@@ -85,7 +85,7 @@ monthly_data %>%
   filter(
     n_distinct(iid) == 1 |
     gvkey %in% primary_issue$gvkey
-  )
+  ) %>% kableExtra::kable(., format = "latex")
 
 monthly_data %>% 
   group_by(gvkey) %>% 
